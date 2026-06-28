@@ -55,6 +55,7 @@ func init() {
 	viper.SetDefault("database_hostname", "localhost")
 	viper.SetDefault("database_name", "speedtest")
 	viper.SetDefault("database_username", "postgres")
+	viper.SetDefault("database_password", "")
 	viper.SetDefault("enable_tls", false)
 	viper.SetDefault("enable_http2", false)
 
@@ -62,15 +63,42 @@ func init() {
 	viper.AddConfigPath(".")
 }
 
+// func Load(configPath string) Config {
+// 	var conf Config
+
+// 	configFile = configPath
+// 	viper.SetConfigFile(configPath)
+// 	viper.SetEnvPrefix("speedtest")
+// 	viper.AutomaticEnv()
+// 	viper.ReadInConfig()
+
+// 	if err := viper.Unmarshal(&conf); err != nil {
+// 		log.Fatalf("Error parsing config: %s", err)
+// 	}
+
+// 	loadedConfig = &conf
+
+//		return conf
+//	}
+
+// LOAD FROM OS ENV
 func Load(configPath string) Config {
 	var conf Config
 
 	configFile = configPath
-	viper.SetConfigFile(configPath)
-	viper.SetEnvPrefix("speedtest")
-	viper.AutomaticEnv()
-	viper.ReadInConfig()
 
+	// 1. Tell Viper to look for environment variables prefixed with SPEEDTEST_
+	viper.SetEnvPrefix("")
+	viper.AutomaticEnv()
+
+	// 2. Optional: If you still want to allow a file path but don't want it to crash if it's missing
+	if configPath != "" {
+		viper.SetConfigFile(configPath)
+		// We use _ to ignore the error if the file doesn't exist
+		_ = viper.ReadInConfig()
+	}
+
+	// 3. Viper will now parse the environment variables (and defaults) into your struct
 	if err := viper.Unmarshal(&conf); err != nil {
 		log.Fatalf("Error parsing config: %s", err)
 	}
