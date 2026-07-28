@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -63,7 +62,7 @@ func ListenAndServe(conf *config.Config) error {
 		assetFS = justFilesFilesystem{fs: http.Dir(conf.AssetsPath), readDirBatchSize: 2}
 	}
 
-	r.Get(conf.BaseURL+"/*", pages(assetFS, conf.BaseURL))
+	r.Get(conf.BaseURL+"/*", pages(assetFS, conf))
 	r.HandleFunc(conf.BaseURL+"/empty", empty)
 	r.HandleFunc(conf.BaseURL+"/backend/empty", empty)
 	r.Get(conf.BaseURL+"/garbage", garbage)
@@ -80,6 +79,8 @@ func ListenAndServe(conf *config.Config) error {
 	r.HandleFunc(conf.BaseURL+"/backend/stats", results.Stats)
 	r.Get(conf.BaseURL+"/results/json", results.JSONResult)
 	r.Get(conf.BaseURL+"/backend/results/json", results.JSONResult)
+	r.Get(conf.BaseURL+"/server-list.json", serverList(conf))
+	r.Get(conf.BaseURL+"/settings.json", settings(conf))
 
 	// PHP frontend default values compatibility
 	r.HandleFunc(conf.BaseURL+"/empty.php", empty)
@@ -116,17 +117,28 @@ func listenProxyProtocol(conf *config.Config, r *chi.Mux) {
 	}
 }
 
-func pages(fs http.FileSystem, BaseURL string) http.HandlerFunc {
+func pages(fs http.FileSystem, conf *config.Config) http.HandlerFunc {
 	var removeBaseURL *regexp.Regexp
-	if BaseURL != "" {
-		removeBaseURL = regexp.MustCompile("^" + BaseURL + "/")
+	if conf.BaseURL != "" {
+		removeBaseURL = regexp.MustCompile("^" + conf.BaseURL + "/")
 	}
+
+	defaultIndex := conf.DefaultIndex
+	if defaultIndex == "" {
+		defaultIndex = "index.html"
+	}
+	// ensure it has a leading slash for RequestURI comparison
+	if defaultIndex[0] != '/' {
+		defaultIndex = "/" + defaultIndex
+	}
+
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if BaseURL != "" {
+		if conf.BaseURL != "" {
 			r.URL.Path = removeBaseURL.ReplaceAllString(r.URL.Path, "/")
 		}
-		if r.RequestURI == "/" {
-			r.RequestURI = "/index.html"
+		if r.URL.Path == "/" {
+			r.URL.Path = defaultIndex
+			r.RequestURI = defaultIndex
 		}
 
 		http.FileServer(fs).ServeHTTP(w, r)
@@ -146,7 +158,7 @@ func sendPHPCORSHeaders(w http.ResponseWriter, r *http.Request) {
 }
 
 func empty(w http.ResponseWriter, r *http.Request) {
-	_, err := io.Copy(ioutil.Discard, r.Body)
+	_, err := io.Copy(io.Discard, r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -241,4 +253,42 @@ func getIP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.JSON(w, r, ret)
+}
+
+// serverList serves a dynamically generated server-list.json for the modern UI.
+// It points to the same server that is currently running.
+func serverList(conf *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		base := conf.BaseURL
+		entry := map[string]string{
+			"name":     "Local Server",
+			"server":   "//" + r.Host + base + "/",
+			"dlURL":    "backend/garbage",
+			"ulURL":    "backend/empty",
+			"pingURL":  "backend/empty",
+			"getIpURL": "backend/getIP",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode([]map[string]string{entry}); err != nil {
+			log.Errorf("Error writing server-list.json: %s", err)
+		}
+	}
+}
+
+// settings serves a dynamically generated settings.json for the modern UI.
+// It exposes the telemetry level based on the current config.
+func settings(conf *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		telemetryLevel := "off"
+		if conf.DatabaseType != "none" {
+			telemetryLevel = "basic"
+		}
+		s := map[string]string{
+			"telemetry_level": telemetryLevel,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(s); err != nil {
+			log.Errorf("Error writing settings.json: %s", err)
+		}
+	}
 }

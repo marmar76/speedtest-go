@@ -43,6 +43,17 @@
     </p>
     <button class="disabled" id="start-button"></button>
 
+    <div class="unit-selector-wrapper">
+      <select id="unit-selector" aria-label="Speed unit">
+        <option value="Mbps" selected>Mbps</option>
+        <option value="MBps">MBps</option>
+        <option value="Kbps">Kbps</option>
+        <option value="KBps">KBps</option>
+        <option value="Gbps">Gbps</option>
+        <option value="GBps">GBps</option>
+      </select>
+    </div>
+
     <div class="gauge-layout">
       <div class="ping hidden">
         <span class="label">Ping</span>:&nbsp;
@@ -52,14 +63,14 @@
       <div class="gauge download" id="download-gauge">
         <div class="progress"></div>
         <div class="speed"></div>
-        <h1><span id="download-speed">00</span> Mbps</h1>
+        <h1><span id="download-speed">00</span> <span class="unit-label">Mbps</span></h1>
         <h2>Download</h2>
       </div>
 
       <div class="gauge upload" id="upload-gauge">
         <div class="progress"></div>
         <div class="speed"></div>
-        <h1><span id="upload-speed">00</span> Mbps</h1>
+        <h1><span id="upload-speed">00</span> <span class="unit-label">Mbps</span></h1>
         <h2>Upload</h2>
       </div>
 

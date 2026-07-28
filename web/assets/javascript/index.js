@@ -20,7 +20,29 @@ const testState = {
   testData: null,
   testDataDirty: false,
   telemetryEnabled: false,
+  unit: "Mbps", // currently selected display unit
 };
+
+// Unit definitions: each entry has a label and a multiplier from Mbps
+const UNITS = {
+  Mbps: { label: "Mbps", factor: 1 },
+  MBps: { label: "MBps", factor: 1 / 8 },
+  Kbps: { label: "Kbps", factor: 1000 },
+  KBps: { label: "KBps", factor: 1000 / 8 },
+  Gbps: { label: "Gbps", factor: 1 / 1000 },
+  GBps: { label: "GBps", factor: 1 / 8000 },
+};
+
+/**
+ * Convert a speed value from Mbps to the currently selected unit
+ * @param {string|number} mbps - Speed in Mbps
+ * @returns {number}
+ */
+function convertSpeed(mbps) {
+  const v = Number(mbps);
+  if (!isFinite(v)) return 0;
+  return v * UNITS[testState.unit].factor;
+}
 
 // Bootstrap the application when the DOM is ready
 window.addEventListener("DOMContentLoaded", async () => {
@@ -71,6 +93,25 @@ function hookUpButtons() {
         document.querySelectorAll("dialog").forEach((modal) => modal.close())
       );
     });
+
+  // Unit selector: update state and re-render labels immediately
+  const unitSelector = document.querySelector("#unit-selector");
+  // Restore saved preference if any
+  const savedUnit = localStorage.getItem("speedUnit");
+  if (savedUnit && UNITS[savedUnit]) {
+    testState.unit = savedUnit;
+    unitSelector.value = savedUnit;
+  }
+  unitSelector.addEventListener("change", () => {
+    testState.unit = unitSelector.value;
+    localStorage.setItem("speedUnit", testState.unit);
+    // Mark dirty so the render loop updates the displayed values immediately
+    testState.testDataDirty = true;
+    // Update the unit labels next to the gauges
+    document.querySelectorAll(".unit-label").forEach((el) => {
+      el.textContent = UNITS[testState.unit].label;
+    });
+  });
 }
 
 /**
@@ -363,8 +404,8 @@ function startRenderingLoop() {
       )}deg`;
 
       // Set numeric values
-      downloadText.textContent = numberToText(testState.testData.dlStatus);
-      uploadText.textContent = numberToText(testState.testData.ulStatus);
+      downloadText.textContent = numberToText(convertSpeed(testState.testData.dlStatus));
+      uploadText.textContent = numberToText(convertSpeed(testState.testData.ulStatus));
       ping.textContent = numberToText(testState.testData.pingStatus);
       jitter.textContent = numberToText(testState.testData.jitterStatus);
 

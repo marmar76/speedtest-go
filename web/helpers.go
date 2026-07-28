@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -55,13 +55,13 @@ func getIPInfo(addr string) results.IPInfoResponse {
 		log.Errorf("Error getting response from ipinfo.io: %s", err)
 		return ret
 	}
+	defer resp.Body.Close()
 
-	raw, err := ioutil.ReadAll(resp.Body)
+	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Error reading response from ipinfo.io: %s", err)
 		return ret
 	}
-	defer resp.Body.Close()
 
 	if err := json.Unmarshal(raw, &ret); err != nil {
 		log.Errorf("Error parsing response from ipinfo.io: %s", err)
@@ -81,15 +81,16 @@ func SetServerLocation(conf *config.Config) {
 	var ret results.IPInfoResponse
 	resp, err := http.DefaultClient.Get(getIPInfoURL(""))
 	if err != nil {
-		log.Errorf("Error getting repsonse from ipinfo.io: %s", err)
+		log.Errorf("Error getting response from ipinfo.io: %s", err)
 		return
 	}
-	raw, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Error reading response from ipinfo.io: %s", err)
 		return
 	}
-	defer resp.Body.Close()
 
 	if err := json.Unmarshal(raw, &ret); err != nil {
 		log.Errorf("Error parsing response from ipinfo.io: %s", err)

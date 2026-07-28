@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+// Package-level compiled regexes for private IP classification.
+// These are static patterns so they are compiled once at init time.
+var (
+	private172Regex = regexp.MustCompile(`^172\.(1[6-9]|2\d|3[01])\.`)
+	cgnatRegex      = regexp.MustCompile(`^100\.([6-9][0-9]|1[0-2][0-7])\.`)
+)
+
 // normalizeCandidateIP validates and normalizes an IP address candidate
 // from a request header. It trims whitespace, takes the first comma-separated
 // token (for XFF-like headers that may contain a chain), and validates.
@@ -90,13 +97,13 @@ func classifyPrivateIP(ip string) string {
 		return "localhost IPv4 access"
 	case strings.HasPrefix(ip, "10."):
 		return "private IPv4 access"
-	case mustCompile(`^172\.(1[6-9]|2\d|3[01])\.`).MatchString(ip):
+	case private172Regex.MatchString(ip):
 		return "private IPv4 access"
 	case strings.HasPrefix(ip, "192.168"):
 		return "private IPv4 access"
 	case strings.HasPrefix(ip, "169.254"):
 		return "link-local IPv4 access"
-	case mustCompile(`^100\.([6-9][0-9]|1[0-2][0-7])\.`).MatchString(ip):
+	case cgnatRegex.MatchString(ip):
 		return "CGNAT IPv4 access"
 	}
 	return ""
@@ -111,10 +118,4 @@ func isULAIPv6(ipStr string) bool {
 	// fc00::/7 means the first 7 bits are 1111110
 	// So the first byte & 0xFE must equal 0xFC
 	return ip[0]&0xFE == 0xFC
-}
-
-// mustCompile is a helper that compiles a regex and panics on error
-// (safe to use for static patterns).
-func mustCompile(pattern string) *regexp.Regexp {
-	return regexp.MustCompile(pattern)
 }

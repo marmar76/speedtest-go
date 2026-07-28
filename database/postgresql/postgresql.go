@@ -51,16 +51,18 @@ func (p *PostgreSQL) FetchLast100() ([]schema.TelemetryData, error) {
 	if err != nil {
 		return nil, err
 	}
-	if rows != nil {
-		var id string
+	defer rows.Close()
 
-		for rows.Next() {
-			var record schema.TelemetryData
-			if err := rows.Scan(&id, &record.Timestamp, &record.IPAddress, &record.ISPInfo, &record.Extra, &record.UserAgent, &record.Language, &record.Download, &record.Upload, &record.Ping, &record.Jitter, &record.Log, &record.UUID); err != nil {
-				return nil, err
-			}
-			records = append(records, record)
+	var id string
+	for rows.Next() {
+		var record schema.TelemetryData
+		if err := rows.Scan(&id, &record.Timestamp, &record.IPAddress, &record.ISPInfo, &record.Extra, &record.UserAgent, &record.Language, &record.Download, &record.Upload, &record.Ping, &record.Jitter, &record.Log, &record.UUID); err != nil {
+			return nil, err
 		}
+		records = append(records, record)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return records, nil
 }

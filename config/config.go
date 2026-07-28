@@ -18,7 +18,8 @@ type Config struct {
 	RedactIP            bool   `mapstructure:"redact_ip_addresses"`
 	EnableIDObfuscation bool   `mapstructure:"enable_id_obfuscation"`
 
-	AssetsPath string `mapstructure:"assets_path"`
+	AssetsPath   string `mapstructure:"assets_path"`
+	DefaultIndex string `mapstructure:"default_index"`
 
 	DatabaseType     string `mapstructure:"database_type"`
 	DatabaseHostname string `mapstructure:"database_hostname"`
@@ -58,6 +59,7 @@ func init() {
 	viper.SetDefault("database_password", "")
 	viper.SetDefault("enable_tls", false)
 	viper.SetDefault("enable_http2", false)
+	viper.SetDefault("default_index", "index.html")
 
 	viper.SetConfigName("settings")
 	viper.AddConfigPath(".")

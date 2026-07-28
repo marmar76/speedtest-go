@@ -15,6 +15,10 @@ ipinfo_api_key=""
 # assets directory path, defaults to `assets` in the same directory
 assets_path=""
 
+# default page served at /, can be index.html, index-classic.html, or index-modern.html
+# default_index="index-classic.html"
+default_index="index-modern.html"
+
 # password for logging into statistics page
 statistics_password="PASSWORD"
 # redact IP addresses

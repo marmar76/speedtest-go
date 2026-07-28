@@ -30,8 +30,20 @@
     --progress-width: min(1.2vw, 0.6rem);
     --speed-width: min(4vw, 3rem);
   }
+  @media screen and (max-width: 600px) {
+    grid-template-areas:
+      "download"
+      "upload"
+      "ping"
+      "jitter"
+      "unit";
+    gap: 3rem 0;
+
+    --gauge-width: min(70vw, 32rem);
+    --gauge-height: min(49vw, 22rem);
+  }
   @media screen and (max-width: 500px) {
-    gap: 5rem 2rem;
+    gap: 2.5rem 0;
   }
 }
 
@@ -197,6 +209,14 @@ div.gauge {
       color: var(--secondary-text-color);
       letter-spacing: -0.3rem;
     }
+
+    & > span.unit-label {
+      font-size: 3.5rem;
+      font-weight: 300;
+      display: inline;
+      margin-left: 0.5rem;
+      letter-spacing: -0.15rem;
+    }
   }
   & > h2 {
     bottom: 0;
@@ -210,6 +230,10 @@ div.gauge {
 
       & > span {
         font-size: 8vw;
+      }
+
+      & > span.unit-label {
+        font-size: 5vw;
       }
     }
 
