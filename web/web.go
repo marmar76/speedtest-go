@@ -117,7 +117,7 @@ func listenProxyProtocol(conf *config.Config, r *chi.Mux) {
 	}
 }
 
-func pages(fs http.FileSystem, conf *config.Config) http.HandlerFunc {
+func pages(fileSystem http.FileSystem, conf *config.Config) http.HandlerFunc {
 	var removeBaseURL *regexp.Regexp
 	if conf.BaseURL != "" {
 		removeBaseURL = regexp.MustCompile("^" + conf.BaseURL + "/")
@@ -127,21 +127,38 @@ func pages(fs http.FileSystem, conf *config.Config) http.HandlerFunc {
 	if defaultIndex == "" {
 		defaultIndex = "index.html"
 	}
-	// ensure it has a leading slash for RequestURI comparison
+	// ensure it has a leading slash
 	if defaultIndex[0] != '/' {
 		defaultIndex = "/" + defaultIndex
 	}
+
+	fileServer := http.FileServer(fileSystem)
 
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if conf.BaseURL != "" {
 			r.URL.Path = removeBaseURL.ReplaceAllString(r.URL.Path, "/")
 		}
+
+		// Serve the configured default page for root requests without redirecting
 		if r.URL.Path == "/" {
-			r.URL.Path = defaultIndex
-			r.RequestURI = defaultIndex
+			f, err := fileSystem.Open(defaultIndex)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			defer f.Close()
+			fi, err := f.Stat()
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			http.ServeContent(w, r, defaultIndex, fi.ModTime(), f.(interface {
+				io.ReadSeeker
+			}))
+			return
 		}
 
-		http.FileServer(fs).ServeHTTP(w, r)
+		fileServer.ServeHTTP(w, r)
 	}
 
 	return fn
