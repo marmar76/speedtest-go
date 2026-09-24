@@ -26,6 +26,7 @@ type Config struct {
 	DatabaseName     string `mapstructure:"database_name"`
 	DatabaseUsername string `mapstructure:"database_username"`
 	DatabasePassword string `mapstructure:"database_password"`
+	DatabaseSSLMode  string `mapstructure:"database_sslmode"`
 
 	DatabaseFile string `mapstructure:"database_file"`
 	DatabasePort string `mapstructure:"database_port"`

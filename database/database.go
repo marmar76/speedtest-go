@@ -27,7 +27,7 @@ type DataAccess interface {
 func SetDBInfo(conf *config.Config) {
 	switch conf.DatabaseType {
 	case "postgresql":
-		DB = postgresql.Open(conf.DatabaseHostname, conf.DatabaseUsername, conf.DatabasePassword, conf.DatabaseName)
+		DB = postgresql.Open(conf.DatabaseHostname, conf.DatabaseUsername, conf.DatabasePassword, conf.DatabaseName, conf.DatabaseSSLMode)
 	case "mysql":
 		DB = mysql.Open(conf.DatabaseHostname, conf.DatabaseUsername, conf.DatabasePassword, conf.DatabaseName)
 	case "bolt":

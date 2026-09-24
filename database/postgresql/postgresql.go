@@ -11,15 +11,15 @@ import (
 )
 
 const (
-	connectionStringTemplate = `postgres://%s:%s@%s/%s?sslmode=disable`
+	connectionStringTemplate = `postgres://%s:%s@%s/%s?sslmode=%s`
 )
 
 type PostgreSQL struct {
 	db *sql.DB
 }
 
-func Open(hostname, username, password, database string) *PostgreSQL {
-	connStr := fmt.Sprintf(connectionStringTemplate, username, password, hostname, database)
+func Open(hostname, username, password, database, sslmode string) *PostgreSQL {
+	connStr := fmt.Sprintf(connectionStringTemplate, username, password, hostname, database, sslmode)
 	conn, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Cannot open PostgreSQL database: %s", err)
