@@ -31,6 +31,7 @@ database_hostname=""
 database_name=""
 database_username=""
 database_password=""
+database_sslmode="disable"
 # database port (optional, defaults to driver default)
 database_port=""
 

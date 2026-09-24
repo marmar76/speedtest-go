@@ -58,6 +58,7 @@ func init() {
 	viper.SetDefault("database_name", "speedtest")
 	viper.SetDefault("database_username", "postgres")
 	viper.SetDefault("database_password", "")
+	viper.SetDefault("database_sslmode", "disable")
 	viper.SetDefault("enable_tls", false)
 	viper.SetDefault("enable_http2", false)
 	viper.SetDefault("default_index", "index.html")
@@ -90,7 +91,7 @@ func Load(configPath string) Config {
 
 	configFile = configPath
 
-	// 1. Tell Viper to look for environment variables prefixed with SPEEDTEST_
+	// 1. Tell Viper to look for environment variables
 	viper.SetEnvPrefix("")
 	viper.AutomaticEnv()
 
